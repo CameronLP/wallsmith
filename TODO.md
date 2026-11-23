@@ -10,6 +10,9 @@
 - [ ] **Retro synthwave:** neon grid floor, striped sun, chrome mountains.
 - [ ] **Moiré / op-art:** overlapping line patterns with interference effects.
 - [ ] **Paper cut-out landscapes:** layered hills in the GNOME flat style, but as scenery.
+- [x] **Moebius-style artwork:** clean ink linework (ligne claire) with flat, sun-bleached pastel
+      fills and fine hatching. Think vast desert or alien landscapes: mesas, rock spires, huge
+      skies, maybe a tiny distant figure or structure for scale.
 
 ## Features / improvements
 

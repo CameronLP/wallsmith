@@ -119,10 +119,20 @@ def original_stars(img, rng, W, H, oy, dh, cols, transition, mode, stars, classi
     scale = 1 if classic else max(1.0, H / 1080)
     # more pixels -> more stars (linear in scale, so big canvases aren't sparse)
     area_k = 1 if classic else (W * H) / ref_area / scale
-    # light mode: only the first stars of the evening -- few, but clearly visible (see --light-stars)
-    star_k = stars * (1.0 if mode == "dark" else 0.1 * light_stars)
-    n_small = int(2500 * area_k * star_k)
-    n_big = int(200 * area_k * star_k)
+    # both modes lay out the same (dark-mode) star field from the same random draws, so a
+    # light/dark pair has its stars in the same places. Light mode then shows only a subset:
+    # the first stars of the evening -- few, but clearly visible (see --light-stars)
+    n_small = int(2500 * area_k * stars)
+    n_big = int(200 * area_k * stars)
+    light = mode == "light"
+    frac = min(1.0, 0.1 * light_stars)              # share of the dark-mode stars shown in light mode
+    # the light-mode selection uses its own child streams, so the main stream (and with it the
+    # dark-mode picture, the hills and the dither) is identical in both modes
+    sel_small, sel_big = rng.spawn(2)
+
+    def light_weight(sp):
+        """Light mode: concentrate stars toward the darker top of the sky."""
+        return frac * np.clip((sp - 0.3) / 0.45, 0, 1) ** 1.5
 
     def star_color(sp):
         """The original's getStarColor: sky-tinted near the horizon, white above half height."""
@@ -143,8 +153,13 @@ def original_stars(img, rng, W, H, oy, dh, cols, transition, mode, stars, classi
     xs = (rng.integers(0, W0, n_small) * kc).astype(int)
     sp = (oy + dh - (ys + 0.5)) / dh
     keep = sp > 0.02 if not classic else np.ones_like(sp, bool)
-    if mode == "light":                            # concentrate toward the darker top of the sky
-        keep &= rng.random(len(sp)) < np.clip((sp - 0.3) / 0.45, 0, 1) ** 1.5
+    if not classic:                                # brightness (drawn in both modes)
+        br = (0.45 + 0.55 * rng.random(keep.sum()) ** 3).astype(F32)
+    if light:
+        shown = sel_small.random(len(sp)) < light_weight(sp)
+        if not classic:
+            br = br[shown[keep]]
+        keep &= shown
     sc = star_color(sp[keep])
     if classic:
         for dy in range(uc):
@@ -156,7 +171,6 @@ def original_stars(img, rng, W, H, oy, dh, cols, transition, mode, stars, classi
         k = int(np.ceil(rad + 1))
         ky, kx = np.mgrid[-k:k + 1, -k:k + 1]
         ker = np.clip(rad + 0.5 - np.hypot(kx, ky), 0, 1).astype(F32)
-        br = (0.45 + 0.55 * rng.random(keep.sum()) ** 3).astype(F32)
         yk, xk = ys[keep], xs[keep]
         for dy, dx, w in zip(ky.ravel(), kx.ravel(), ker.ravel()):
             if w <= 0:
@@ -176,9 +190,9 @@ def original_stars(img, rng, W, H, oy, dh, cols, transition, mode, stars, classi
             x, y = int(rng.integers(0, W)), int(rng.integers(0, H))
         size = int(rng.integers(1, 5))
         spy = (oy + dh - (y + 0.5)) / dh
-        if not classic and spy < 0.03:
+        if light and not sel_big.random() < light_weight(spy):
             continue
-        if mode == "light" and not (spy > 0.3 and rng.random() < min(1.0, (spy - 0.3) / 0.45) ** 1.5):
+        if not classic and spy < 0.03:
             continue
         c = star_color(np.array([spy], F32))[0]
         t, L = 2 * u, (2 if size <= 2 else 4) * u
@@ -237,7 +251,10 @@ def realistic_stars(img, rng, W, H, ox, oy, dw, dh, mode, stars, milkyway, light
         glow_col = np.array([0.75, 0.78, 0.9], F32)
         acc += (band * fade * (0.05 if light else 0.16))[..., None] * glow_col
 
-    n = int(W * H / 260 / scale * stars * (0.12 * light_stars if light else 1.0))
+    # both modes draw the same (dark-mode) star field, so a light/dark pair has its stars in the
+    # same places; light mode then shows only the brightest of them (see --light-stars)
+    n = int(W * H / 260 / scale * stars)
+    frac = min(1.0, 0.12 * light_stars)        # share of the dark-mode stars shown in light mode
     x = rng.random(n) * W
     y = rng.random(n) * H
     if band is not None:  # extra stars inside the Milky Way
@@ -249,15 +266,22 @@ def realistic_stars(img, rng, W, H, ox, oy, dw, dh, mode, stars, milkyway, light
         n = len(x)
     p = (oy + dh - y) / dh
     # power-law magnitudes: most stars are faint, a handful are bright
-    b = np.clip(0.035 / rng.random(n) ** 0.85, 0, 6).astype(F32)
+    r = rng.random(n)
+    b = np.clip(0.035 / r ** 0.85, 0, 6).astype(F32)
     # atmospheric extinction: dimmer near the horizon
     b *= (np.clip(p / 0.35, 0, 1) ** 1.6).astype(F32)
-    if light:
-        # few but clearly visible stars, mostly high up where the dusk sky is darkest
-        b = np.clip(b * 4, 0, 4) * smooth(0.3, 0.8, p).astype(F32)
     # colour temperature: blue-white .. white .. yellow .. orange; redder near the horizon
     temps = np.array([[0.78, 0.86, 1.0], [1.0, 1.0, 1.0], [1.0, 0.92, 0.78], [1.0, 0.78, 0.6]], F32)
     tsel = np.clip(rng.normal(1.2, 0.8, n) + (1 - np.clip(p / 0.3, 0, 1)) * 1.2, 0, 3)
+    if light:
+        # the first stars of the evening are the brightest ones (smallest r). Rescaling r by frac
+        # gives the shown stars the full brightness spread again, so they look like before
+        shown = r < frac
+        x, y, p, tsel = x[shown], y[shown], p[shown], tsel[shown]
+        b = b[shown] * F32(frac ** 0.85)
+        # few but clearly visible stars, mostly high up where the dusk sky is darkest
+        b = np.clip(b * 4, 0, 4) * smooth(0.3, 0.8, p).astype(F32)
+        n = len(x)
     i0 = np.floor(tsel).astype(int).clip(0, 2)
     f = (tsel - i0)[:, None]
     col = temps[i0] * (1 - f) + temps[i0 + 1] * f
@@ -413,7 +437,8 @@ def main():
     ap.add_argument("--stars", type=float, default=1.0, help="star density multiplier")
     ap.add_argument("--light-stars", type=float, default=1.0,
                     help="stars in light mode: 0 = none, 1 = a few bright 'first stars' near the top (default), "
-                         "~10 = about dark-mode density")
+                         "~10 = every dark-mode star (the most it goes). Light-mode stars are always a "
+                         "subset of the dark-mode ones, in the same positions")
     ap.add_argument("--light-level", type=float, default=1.0,
                     help="brightness of light mode: 0 = as dark as dark mode, 1 = normal (default), "
                          "1.3 = paler daytime look, 2 = near white")
