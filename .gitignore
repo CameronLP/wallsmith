@@ -221,3 +221,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# wallsmith: rendered wallpapers and reference images inside the generator folders
+# (regenerate renders with the scripts)
+/aero/*.png
+/aurora/*.png
+/bryce/*.png
+/gnome/*.png
+/twilight/*.png
+/veils/*.png
+*-fast.png
+/aero-light.png
+/aero-dark.png
