@@ -37,6 +37,11 @@
 - [ ] `aero`: random ribbon layouts per seed (currently only the light streaks change).
 - [ ] A single `wallsmith` entry point (`uv run wallsmith.py veils --style vista …`).
 - [ ] Batch contact sheet: render `--fast` previews into one grid image for picking seeds.
+- [ ] Mobile wallpaper sizes: `--size` presets for phones and tablets (e.g. common iPhone/Android
+      portrait resolutions, ~9:19.5 / 9:20, plus tablets around 3:4 / 10:16). Consider the extra
+      width phone launchers use for parallax/scrolling, and a safe area that avoids the clock and
+      dock regions on lock and home screens. Also check that each generator's composition works in
+      tall portrait (like twilight's `--sky-span`/`--ground`).
 
 ## Done
 
