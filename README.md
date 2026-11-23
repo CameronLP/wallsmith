@@ -13,6 +13,8 @@ wallsmith only *generates* images. It never touches your desktop settings.
 | [`bryce/`](bryce/README.md) | 90s Bryce 3D raytraced landscapes (day/night) | ~45 s per mode |
 | [`gnome/`](gnome/README.md) | GNOME/Adwaita-style flat layered shapes | ~5 s per mode |
 | [`twilight/`](twilight/README.md) | Twilight sky with original or realistic stars (after SGI's classic Twilight) | ~9 s per mode |
+| [`moebius/`](moebius/README.md) | 3D Möbius strip with colour bands and ligne-claire ink edges | ~3 s per mode |
+| [`neon/`](neon/README.md) | Neon Nocturne: bokeh city lights on wet pavement with rain | ~10 s per mode |
 
 Planned generators and features are listed in [TODO.md](TODO.md).
 
@@ -70,6 +72,8 @@ uv run aurora/aurora.py     --size gnome
 uv run bryce/bryce.py       --size gnome
 uv run twilight/twilight.py --size gnome
 uv run aero/generate.py     --size gnome
+uv run moebius/moebius.py   --size gnome
+uv run neon/neon.py         --size gnome
 ```
 
 - **Use `--ss 1` at this size.** 4096² already has plenty of pixels. Supersampling

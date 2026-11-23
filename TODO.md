@@ -10,6 +10,9 @@
 - [ ] **Retro synthwave:** neon grid floor, striped sun, chrome mountains.
 - [ ] **Moiré / op-art:** overlapping line patterns with interference effects.
 - [ ] **Paper cut-out landscapes:** layered hills in the GNOME flat style, but as scenery.
+- [x] **Moebius-style artwork:** clean ink linework (ligne claire) with flat, sun-bleached pastel
+      fills and fine hatching. Think vast desert or alien landscapes: mesas, rock spires, huge
+      skies, maybe a tiny distant figure or structure for scale.
 
 ## Features / improvements
 
@@ -37,6 +40,11 @@
 - [ ] `aero`: random ribbon layouts per seed (currently only the light streaks change).
 - [ ] A single `wallsmith` entry point (`uv run wallsmith.py veils --style vista …`).
 - [ ] Batch contact sheet: render `--fast` previews into one grid image for picking seeds.
+- [ ] Mobile wallpaper sizes: `--size` presets for phones and tablets (e.g. common iPhone/Android
+      portrait resolutions, ~9:19.5 / 9:20, plus tablets around 3:4 / 10:16). Consider the extra
+      width phone launchers use for parallax/scrolling, and a safe area that avoids the clock and
+      dock regions on lock and home screens. Also check that each generator's composition works in
+      tall portrait (like twilight's `--sky-span`/`--ground`).
 
 ## Done
 
